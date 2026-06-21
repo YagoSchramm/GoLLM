@@ -24,7 +24,7 @@ type BPE struct {
 func (b *BPE) Decode(ids []int) string {
 	var sb strings.Builder
 	for _, id := range ids {
-		if id >= len(b.iVocab) {
+		if id < 0 || id >= len(b.iVocab) {
 			continue
 		}
 		token := b.iVocab[id]
@@ -92,7 +92,6 @@ func (b *BPE) Train(corpus string, vocabSize int) {
 		seqs = applyMergeAll(seqs, pair[0], pair[1], merged)
 		b.merges = append(b.merges, merges{a: pair[0], b: pair[1], result: merged})
 		b.addToken(merged)
-
 	}
 }
 
@@ -125,10 +124,11 @@ func (b *BPE) bestPairs(counts map[[2]string]int) [2]string {
 			return entries[i].count > entries[j].count
 		}
 
-		ai := entries[i].pair[0] + entries[i].pair[1]
-		aj := entries[j].pair[0] + entries[j].pair[1]
+		if entries[i].pair[0] != entries[j].pair[0] {
+			return entries[i].pair[0] < entries[j].pair[0]
+		}
 
-		return ai < aj
+		return entries[i].pair[1] < entries[j].pair[1]
 	})
 
 	return entries[0].pair
